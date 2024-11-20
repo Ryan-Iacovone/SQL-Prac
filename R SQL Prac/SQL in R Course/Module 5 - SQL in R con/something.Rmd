@@ -1,0 +1,48 @@
+#list of tasks will do with an exisiting data base and R 
+
+1. create logical and physical database design 
+  entity-relationship diagrams are used to visualize data structures 
+
+
+2. Clean and split the data into load files (usually used with programming languages - R or Python)
+
+
+
+3. Create the physical database objects (can be done in or outside of R)
+    use the logical databse to create the physical databse objects, such as tables 
+```{r}
+#creating the schools table using SQL in R 
+library(RODBC)
+df2 <- sqlQuery(con1, "Create Table
+                DB2User1.school (
+                B_ID CHAR(6) NOT NULL,
+                S_ID CHAR(6) NOT NULL
+                S_NAME VARCHAR(50),
+                LEVEL VARCHAR(70),
+                ENROLLMENT INTEGER)")
+
+#dropping database tables
+sqlDrop(con1, "DB2user1.school")
+#clearing the databse table, keeps the structure in tact 
+sqlClear(con1, "DB2user1.school")
+```
+
+4. Get the data into the databse (R)
+```{r}
+#The import command performs SQL insert statements for groups of rows and then commits the transaction periodically, not good for large datasets
+import from board.csv
+  of DEL
+  message msg_board.txt
+  replace into board 
+
+#The load command, better option for large datasets, by passes logging mechanism
+load from board.csv
+  of del 
+  replace into board
+```
+
+5. Analyze the data (R and SQL)
+
+
+
+

@@ -1,0 +1,174 @@
+```{r}
+library(tidyverse)
+library(readxl)
+library(sqldf)
+library(ggthemes)
+
+ess <- read_csv("Data/ESS10.csv", show_col_types = FALSE)
+
+# SQL to ggplot practice 
+```
+
+
+#What I want to practice basic SQL queires here using a complicated dataset 
+```{r}
+#cntry agea gndr edlvdahu (highest level education hungary)
+
+hu_ess <- sqldf("SELECT cntry, agea, gndr, edlvdahu, hinctnta 
+                FROM ess
+                WHERE cntry = 'HU' AND edlvdahu <= 14 AND hinctnta <= 10  
+                ORDER BY agea")
+
+#only showing disticnt ages and eduation in our dataset 
+sqldf("SELECT DISTINCT agea
+      FROM hu_ess")
+
+sqldf("SELECT DISTINCT edlvdahu
+      FROM hu_ess
+      ORDER BY edlvdahu")
+```
+
+
+```{r}
+#The WHERE clause is used to filter rows before any grouping is performed in a query.
+#The HAVING clause is used to filter the result set after grouping and aggregation have been performed in a query.
+
+#Both achieve the same result 
+hum <- sqldf("SELECT agea, AVG(hinctnta) AS mean_income 
+             FROM hu_ess 
+             GROUP BY agea 
+             HAVING agea > 20")
+sqldf("SELECT agea, AVG(hinctnta) AS mean_income 
+      FROM hu_ess 
+      WHERE agea > 20 
+      GROUP BY agea")
+
+# Creating ggplot object
+gg <- ggplot(hum, aes(agea, mean_income)) +
+  geom_point() +
+  geom_smooth()
+
+# Extract the data from the smoothed curve
+smooth_data <- ggplot_build(gg)$data[[2]]
+
+# Find the maximum y value
+max_y <- max(smooth_data$y)
+#Finding the assoicated x value based on max_y
+max_x <- smooth_data$x[which(smooth_data$y == max_y)]
+
+# The plot
+ggplot(hum, (aes(agea, mean_income))) +
+  geom_point() +
+  geom_smooth() +
+  
+  labs(title = "Income by Age",
+       x = "Age",
+       y = "Mean Income") +
+    
+  geom_hline(yintercept = max_y) +
+  geom_vline(xintercept = max_x) +
+  
+  theme_base()
+```
+
+
+```{r}
+#Income grouped by age and gender
+
+humm2 <- sqldf("SELECT agea, gndr, AVG(hinctnta) AS mean_income
+      FROM hu_ess
+      GROUP BY gndr, agea")
+
+#Handling the conversion of gender into a factor variable in R instead of sql
+humm2$gndr <- factor(humm2$gndr, levels = c(1, 2), labels = c("Male", "Female"))
+
+ggplot(humm2, aes(x = agea, y = mean_income, group = gndr, color = gndr)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  
+  labs(title = "Income Over Time by Sex (Deciles)", 
+    x = "Age",
+    y = "Mean Income",
+    color = "Gender") +
+  
+  scale_color_manual(name = NULL,
+                     values = c("Male" = "blue", "Female" = "hotpink")) +
+  
+  theme_base()
+```
+
+
+```{r}
+# Creating a table of average and sum earnings by education  
+humm3 <- sqldf("SELECT edlvdahu as education_level, AVG(hinctnta) as avg_income, SUM(hinctnta) as sum_income, STDEV(hinctnta) as std, COUNT(*) as total_obs
+                FROM hu_ess
+                GROUP BY edlvdahu")
+
+ggplot(humm3, aes(education_level, avg_income)) + 
+  geom_bar(stat = "identity", fill = "lightgreen", color = "black") +
+  
+  labs(title = "Income by Educaion", 
+  x = "Level of Education",
+  y = "Mean Income") +
+  
+  theme_base()
+```
+
+# practice joining various tables together with sql
+```{r}
+# Mock ESS data to make it simplier for illustrating conversions between dataframes 
+
+df1 <- data.frame(ID = c(1, 2, 3, 4, 5),
+                  name = c("John", "Sandy", "Ashley", "David", "Eve"))
+
+df2 <- data.frame(ID = c(3, 4, 6, 7, 8),
+                  country = c("HU", "FR", "FI", "LT", "FR"))
+
+df3 <- data.frame(ID = c(2, 6, 8, 4, 9),
+                  gender = c(1, 2 ,2 ,1 ,2))
+```
+
+
+```{r}
+#variables: cntry agea gndr edlvdahu (highest level education hungary)
+
+# Inner join - Takes the IDs in df1, finds the same IDs in df2 and combines only those rows together 
+# (New df altogether, no missings)
+
+inner_join_result <- sqldf("SELECT df1.ID, name, country 
+                            FROM df1
+                            INNER JOIN df2 ON df1.ID = df2.ID")
+
+# Inner joining with 3 dfs at once! 
+inner_join_result3 <- sqldf("SELECT df1.ID, name, country 
+                            FROM df1
+                            INNER JOIN df2 ON df1.ID = df2.ID
+                            INNER JOIN df3 ON df1.ID = df3.ID")
+
+# left join - Based on the df1 df, adds the observations from df2 where there is a matching id in df1 
+# (keeps integrity of df1 df but adds matching info from df2, includes missings) 
+
+left_join_result <- sqldf("SELECT df1.ID, name, country
+                           FROM df1
+                           LEFT JOIN df2 ON df1.ID = df2.ID")
+
+# Right Join - Based on the df2 df, adds the observations from df1 where there is a matching id in df2 
+# (keeps integrity of df2 df but adds matching info from df1, includes missings) 
+
+right_join_result <- sqldf("SELECT df1.ID, name, country
+                            FROM df1
+                            RIGHT JOIN df2 ON df1.ID = df2.ID")
+
+# Full outer join - Combines all observations from both df1 and df1, matching on ID where there's observations in both and adding missing values otherwise 
+# (combines integrity of df1 and df2, includes missings)
+
+full_outer_join_result <- sqldf("SELECT IFNULL(df1.ID, df2.ID) AS ID, name, country 
+                                 FROM df1
+                                 FULL OUTER JOIN df2 ON df1.ID = df2.ID")
+
+# Performing two full outer joins sequentially to merge 3 dfs at once  
+full_outer_join_result3 <- sqldf("SELECT IFNULL(df1.ID, IFNULL(df2.ID, df3.ID)) AS ID, name, country, gender
+                                 FROM df1
+                                 FULL OUTER JOIN df2 ON df1.ID = df2.ID
+                                 FULL OUTER JOIN df3 ON df1.ID = df3.ID OR df2.ID = df3.ID")
+```

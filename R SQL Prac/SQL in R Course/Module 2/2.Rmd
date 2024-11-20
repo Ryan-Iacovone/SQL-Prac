@@ -1,0 +1,62 @@
+
+# a databases is a repository of data, provides functionality for adding, modifying, and querying  data 
+#   tabualr form - columns and rows 
+
+ Database management system (DBMS) is a software to manage databases 
+
+relational database management system (RDBMS) - a set of software tools that controls the data (access, organization, and stoarge) ex. MySQL and oracle database 
+
+
+
+
+
+#Relational database concepts 
+
+entities are independent objects which have attributes 
+entities map to tables in a relational database while attributes map to columns in a table 
+
+The relational model is the most used data model, because it allows for data independence since data is stored in tables 
+
+#Entity-Relationship (ER) model - used as a tool to design relational databases  
+
+#"Mapping Entity Diagrams to Table" - entities become tables, attributes get translated into columns 
+
+
+Primary keys: uniquely identifies a specific row in a table (prevents duplication of data )
+
+Foreign keys: Are primary keys defined in other tables creating a link between the tables 
+
+
+
+#Advantages of Cloud databases:
+
+   Ease of use and access because they can be accessed from anywhere using a vendors API or web interface 
+   scalability and economics - expand/shrink storage &compute resources therefore pay per use 
+   Disaster recovery: cloud backups and geographical distribution (3-2-1 rule)
+
+Examples of cloud databases: 
+   IMB db2, Databases for PostgreSQL, oracle database cloud service, Microsoft azure SQL database, amazon relational database services (RDS)
+    These databases are available as Virtual machines or a managed service and can be single or multi-tenant
+
+DBaaS provides users with access to database resources in cloud without setting up hardware and installing software 
+   Once data is loaded, it can be queried using web interfaces and API's 
+
+
+
+#Types of SQL statements: DDL and DML
+   Data Definition Language (DDL) statements define, change, or drop data 
+     Common DDL statements: Create, alter (add or remove columns, modify the data type of columns, add or remove keys, add or remove constraints), truncate (delete all of the rows within a table ), and drop (delete a table from the database) 
+
+#Data Manipulation Language (DML) statements read and modify (CRUD operations (Create, Read, Update, and Delete rows)) - work with data tables 
+    Common DML statements: Insert, select, update, delete 
+
+
+
+
+
+
+
+
+
+
+

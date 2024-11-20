@@ -1,0 +1,93 @@
+```{r}
+library(tidyverse)
+library(readxl)
+library(sqldf)
+
+Claimant_Info <- read_excel("Data/SQL Test.xlsx", sheet = "Claimant_Info")
+Claim_Info <- read_excel("Data/SQL Test.xlsx", sheet = "Claim_Info")
+
+Claim_Info$File_Date <- as.Date(Claim_Info$File_Date)
+
+class(Claim_Info$File_Date)
+```
+
+
+```{r}
+# Questions 1: Please write a query using Table 1 to list the claimants that are only in Wayne County, where the desired results of the query are reflected below.  
+
+sqldf("SELECT * 
+       FROM Claimant_Info
+       WHERE County = 'Wayne'")
+```
+
+
+```{r}
+# Question 2:  Please write a query using Table 1 to get the count of claimants for each gender. Because Michigan does not require claimants to report their gender, some claimants have NULL gender values, which is usually categorized as “Unspecified”
+
+sqldf("SELECT Gender, COUNT(Gender) as Count
+      FROM Claimant_Info
+      GROUP BY Gender") 
+```
+
+
+```{r}
+# Question 3: Please write a query using Table 2 to list the approved claims filed between the dates of 4/1/2020 and 4/30/2021, 
+
+sqldf("SELECT *
+      FROM Claim_Info
+      WHERE Status = 'Approved' AND File_Date BETWEEN '4/1/2020' AND '4/30/2021'")
+```
+
+
+
+```{r}
+# Question 4: Please write a query using Table 1 and Table 2 to get the sum of the Amount_Paid for each county in Michigan
+sqldf("SELECT County, SUM(Claim_Info.Amount_Paid) AS 'Sum of Amount Paid' 
+       FROM Claimant_Info
+       FULL OUTER JOIN Claim_Info ON Claimant_Info.Claimant_ID = Claim_Info.Claimant_ID
+       WHERE County NOT IN ('Cochise', 'Steuben')
+       GROUP BY County
+       ORDER BY County desc")
+```
+
+## Subqueries 
+
+```{r}
+# find the Claim_ID or name and Amount_Paid for all claims where the Amount_Paid is greater than the average Amount_Paid in the county "Wayne."
+# from statement is run first with the alias so need to update alias in select statement
+
+
+# Subqueries in conditional logic
+sqldf("SELECT *
+      FROM tutorial.sf_crime_incidents_2014_01
+      WHERE Date = (SELECT MIN(date)
+                 FROM tutorial.sf_crime_incidents_2014_01")
+
+sqldf("SELECT Claim_ID, Amount_Paid 
+      FROM Claim_Info 
+      WHERE Amount_Paid > 
+          (SELECT AVG(ci.Amount_Paid) 
+          FROM Claim_Info ci
+          JOIN Claimant_Info cmi ON ci.Claimant_ID = cmi.Claimant_ID 
+          WHERE cmi.County = 'Wayne')")
+
+sqldf("SELECT cmi.Name, ci.Amount_Paid 
+      FROM Claim_Info ci
+      JOIN Claimant_Info cmi ON ci.Claimant_ID = cmi.Claimant_ID 
+      WHERE ci.Amount_Paid > 
+          (SELECT AVG(sub_ci.Amount_Paid) 
+          FROM Claim_Info sub_ci
+          JOIN Claimant_Info sub_cmi ON sub_ci.Claimant_ID = sub_cmi.Claimant_ID 
+          WHERE sub_cmi.County = 'Wayne')")
+```
+
+
+
+
+
+
+
+
+
+
+

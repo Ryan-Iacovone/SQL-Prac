@@ -1,0 +1,57 @@
+#Wy use R with a relational database?
+    - Because the data you want to work with resides in a relational database and R is a great data manipulation and visualization tool 
+    - Because R has difficulty with manipulating large datasets, providing concurrent access to data, and (persistence)? 
+          With R, data must reside in memory therefore SQL can be more efficiently to get it from database 
+          SQL can be used to more efficiently extract subsets of a database within R
+          Difficult to change observations within dataframes 
+          
+Relational Databases (RDBMSs) are optimized for:
+    - Manipulating large structured databases 
+    - providing concurrent data access to multiple users 
+    - maintaining data consistency (data types/schemes) for all who want to pull data from it. Plus if you want to change an aspect about the database, the changes must adhere to specific parameters 
+    - Persistence (granular, secure, consistent)
+        R persistence options 
+    
+#Consider using character string for time or date representations, as the info is exchanged between R and the database (otherwise it'll guess what the date format should be)
+
+```{r}
+#Storing and retrieving R data structures 
+
+saveRDS(df, file = "data.Rda")
+df1 <- readRDS("data.Rda")
+```
+  
+Database design considerations:
+  - Relational databases minimized data redundancy (apply database normalization techniques, proper use of foreign keys)
+      IN R, data redundancy must be handled with functions like unique() and duplicated() 
+  - Model attributes and relationship accurately, enable data consistency (accurately model relationships between tables for data consistency )
+      Declarative referential integrity: no equivalent options within dataframes in R 
+  - Databse servers are efficient at merging data from different tables into a single structure 
+      Instead of using the R merge() function, it's better to use SQL joins with virtual tables or views 
+  - Databases support transactions and security (unit of work: antomicity, consistency, isolation, and durability - ACID properties)
+      databse security protects database content, owners/users and prevents unauthorized access 
+
+
+#Common database connectivity options for R: 
+  -ODBC (open database connectivity): RODBC - open database connectivity using R, one of the most common R packages  
+      Originally developed by Microsoft, can be used with many different database servers
+          ODBC driver manager is platform specific (windows,linux)
+          ODBC Drivers are database server specific (DB2, MySQL, Oracle)
+          RODBC provides R functions to interact with database servers 
+      
+  -DBI-Based (Databse Interface-Based): 
+      Database specific: RMySQL, RpostgreSQL, ROracle, RSQLite
+      JDBC (Java database connectivity): RJDBC
+
+```{r}
+#Using RODBC
+
+#Load the RODBC libary
+library(RODBC)
+
+#Connect to a database server 
+con1 <- odbcConnect(dsn, userid, password)
+
+#set a logical varaible to indicate if a connection was successful 
+ds.connect <- (!is.null(con1) && con1 >= 0)
+```
