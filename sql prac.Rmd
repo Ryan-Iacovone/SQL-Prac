@@ -1,0 +1,132 @@
+# connect to microsoft SQL server
+```{r}
+library(tidyverse)
+library(odbc)
+library(DBI)
+library(dotenv)
+
+# Load environment variables from the .env file (same way as python)
+load_dot_env(file = ".env")
+
+# Create the connection
+con <- dbConnect(odbc(),
+                Driver = "SQL Server",
+                Server = "localhost\\SQLEXPRESS",  # Note the double backslash
+                Trusted_Connection = "Yes")
+
+dbExecute(con, "USE TestDB")
+
+# Now you can query your database
+# Example query:
+customers <- dbGetQuery(con, "SELECT * FROM Customers")
+
+# Don't forget to close the connection when you're done
+dbDisconnect(con)
+```
+
+
+# connect to postgres SQL server
+```{r}
+library(RPostgres)
+
+# Establish the connection
+con <- dbConnect(RPostgres::Postgres(), 
+                 host = "localhost", 
+                 port = 5432, 
+                 user = "postgres", 
+                 password = Sys.getenv("postgres_pass"), 
+                 dbname = "overwatch_db")
+
+# Query example
+overwatch_db <- dbGetQuery(con, "SELECT * FROM qp_career_stats")
+
+# Disconnect when done
+dbDisconnect(con)
+```
+
+
+# Updating postgres sql db based on R dataframe
+```{r}
+library(tidyverse)
+library(readxl)
+library(RPostgres)
+
+# Establish the connection
+con <- dbConnect(RPostgres::Postgres(), 
+                 host = "localhost", 
+                 port = 5432, 
+                 user = "postgres", 
+                 password = Sys.getenv("mysql_pass"), 
+                 dbname = "overwatch_db")
+
+# Query to get 3d prints that still need to contacted but are completed 
+prints <- dbGetQuery(con, "SELECT * FROM prints
+                WHERE print_completed = 'X'
+                AND patron_contacted IS NULL
+                AND invalid_email IS NULL
+                AND picked_up IS NULL")
+
+# simulating that we sent emails to patrons
+prints <- prints %>% 
+  mutate(
+    patron_contacted = ifelse(print_completed == "X", "X", ""),
+    contacted_date = ifelse(print_completed == "X", as.Date("11/18/24", format = "%m/%d/%y"), NA))
+
+# Needs to be changed to a date format
+prints$contacted_date <- as.Date(prints$contacted_date)
+
+# Convert data frame to a list of lists (not dictionaries like python)
+records_to_update <- split(prints, seq(nrow(prints)))
+
+update_query <- "UPDATE prints 
+                 SET patron_contacted = $1,
+                     contacted_date = $2,
+                     invalid_email = $3
+                 WHERE card_number = $4"
+
+# Execute updates based on splitting prints dataframe into row based observations
+tryCatch({
+  for (record in records_to_update) {
+    dbExecute(
+      con, 
+      update_query, 
+      params = list(
+        record$patron_contacted,
+        record$contacted_date,
+        record$invalid_email,
+        record$card_number
+      )
+    )
+  }
+  
+  cat(sprintf("Successfully updated %d records in the database\n", length(records_to_update)))
+}, error = function(e) {
+  cat(sprintf("Error updating database: %s\n", e$message))
+})
+
+# Disconnect from the database
+dbDisconnect(con)
+```
+
+
+
+
+# connect to mysql SQL server
+```{r}
+library(RMariaDB)
+
+# Create a connection object
+con <- dbConnect(RMariaDB::MariaDB(), 
+                 host = "localhost", 
+                 port = 3306, 
+                 user = "root", 
+                 password = Sys.getenv("mysql_pass"), 
+                 dbname = "sakila")
+
+# Query example
+city <- dbGetQuery(con, "SELECT * FROM city")
+
+# Disconnect when done
+dbDisconnect(con)
+```
+
