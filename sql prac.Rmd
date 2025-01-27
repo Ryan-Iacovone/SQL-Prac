@@ -113,6 +113,10 @@ dbDisconnect(con)
 # connect to mysql SQL server
 ```{r}
 library(RMariaDB)
+library(dotenv)
+
+# Load environment variables from the .env file (same way as python)
+load_dot_env(file = ".env")
 
 # Create a connection object
 con <- dbConnect(RMariaDB::MariaDB(), 
